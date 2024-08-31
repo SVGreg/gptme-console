@@ -1,4 +1,4 @@
-module gptme
+module gptme-console
 
 go 1.22.6
 

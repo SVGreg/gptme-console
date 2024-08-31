@@ -11,7 +11,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "gptme",
+	Use:   "gptme-console",
 	Short: "Minimal console client to ChatGPT API",
 	Long: `Minimal console client to ChatGPT API
 Use with caution.
