@@ -3,7 +3,7 @@ Copyright © 2024 GPTMe
 */
 package main
 
-import "gptme-console/cmd"
+import "github.com/SVGreg/gptme-console/cmd"
 
 func main() {
 	cmd.Execute()
