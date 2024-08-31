@@ -1,4 +1,4 @@
-module gptme-console
+module github.com/SVGreg/gptme-console
 
 go 1.22.6
 
