@@ -4,10 +4,12 @@ Copyright © 2024 GPTMe
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/SVGreg/gptme-console/gpt"
+	"github.com/spf13/cobra"
 )
 
 // initCmd represents the init command
@@ -15,26 +17,56 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialises GPT environment",
 	Long:  `Initialises GPT environment and configures API key`,
-	Run:   addRun,
+	Run:   initRun,
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	initCmd.PersistentFlags().StringP("key", "k", "", "Specifies API key to work with")
+	initCmd.PersistentFlags().StringP("path", "p", "", "Path where to store configuration file")
 }
 
-func addRun(cmd *cobra.Command, args []string) {
-	fmt.Println("Please specify API key")
-	for _, arg := range args {
-		fmt.Println(arg)
+func initRun(cmd *cobra.Command, args []string) {
+	key, _ := cmd.Flags().GetString("key")
+	if key != "" {
+		fmt.Println("Specified key is", key)
+	} else {
+		cmd.Help()
+		os.Exit(0)
 	}
+
+	if len(args) > 0 {
+		cmd.Help()
+		os.Exit(0)
+	}
+
+	path, _ := cmd.Flags().GetString("path")
+	if path == "" {
+		path = ".gptme-config.json"
+	} else {
+		path += string(os.PathSeparator) + ".gptme-config.json"
+	}
+	fmt.Println("Config path is", path)
+
+	err := SaveConfig(path, gpt.Config{APIKey: key})
+	if err != nil {
+		_ = fmt.Errorf("%v", err)
+		os.Exit(0)
+	}
+}
+
+func SaveConfig(filename string, config gpt.Config) error {
+	res, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	werr := os.WriteFile(filename, res, 0644)
+	if werr != nil {
+		return werr
+	}
+
+	fmt.Println("Configuration", string(res), "saved at", filename)
+
+	return nil
 }
