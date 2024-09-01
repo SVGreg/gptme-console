@@ -4,8 +4,10 @@ Copyright © 2024 GPTMe
 package cmd
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/SVGreg/gptme-console/config"
 	"github.com/spf13/cobra"
 )
 
@@ -14,11 +16,9 @@ var rootCmd = &cobra.Command{
 	Use:   "gptme-console",
 	Short: "Minimal console client to ChatGPT API",
 	Long: `Minimal console client to ChatGPT API
-Use with caution.
+Require to specify API Key and optional path to config file
 	`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: rootRun,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -30,4 +30,21 @@ func Execute() {
 	}
 }
 
-func init() {}
+func init() {
+	rootCmd.PersistentFlags().StringP("path", "p", "", "Path where to store configuration file")
+}
+
+func rootRun(cmd *cobra.Command, args []string) {
+	path, _ := cmd.Flags().GetString("path")
+	path = config.MakePath(path)
+
+	fmt.Println("Config path is", path)
+
+	config, err := config.Read(path)
+	if err != nil {
+		cmd.Help()
+		os.Exit(0)
+	}
+
+	fmt.Println("Current API key is", config.APIKey)
+}
