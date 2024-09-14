@@ -16,7 +16,9 @@ var rootCmd = &cobra.Command{
 	Use:   "gptme-console",
 	Short: "Minimal console client to ChatGPT API",
 	Long: `Minimal console client to ChatGPT API
-Require to specify API Key and optional path to config file
+Require to initialization ahead of use. 
+Please specify API Key using init command. 
+Specify optional path to config file.
 	`,
 	Run: rootRun,
 }

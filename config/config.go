@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"os"
 )
-	
+
 const Filename string = ".gptme-config.json"
 
 type Config struct {
+	OrganizationId string
+	ProjectId string
 	APIKey string
 }
 
