@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/SVGreg/gptme-console/config"
 	"github.com/SVGreg/gptme-console/gpt"
@@ -18,7 +19,7 @@ var askCmd = &cobra.Command{
 	Use:   "ask",
 	Short: "Asks GPT you question",
 	Long: `Asks GPT you question. 
-Please specify exactly one string parameter with the requested question.`,
+Please type the question right after 'ask' command. It is limited to 20 words.`,
 	Run: askRun,
 }
 
@@ -27,24 +28,22 @@ func init() {
 }
 
 func askRun(cmd *cobra.Command, args []string) {
-	if len(args) != 1 {
+	if len(args) > 20 {
 		cmd.Help()
 		os.Exit(0)
 	}
 
-	fmt.Println("Q:", args[0])
-	for arg := range args {
-		fmt.Println(arg)
-	}
+	question := strings.Join(args, " ")
+	fmt.Println("Q:", question)
 
 	// Read config: api key
-	config, err := config.Read(config.MakePath(""))
+	path, _ := cmd.Flags().GetString("path")
+	config, err := config.Read(config.MakePath(path))
 	if err != nil {
 		log.Fatalln("Unable to read config", err)
 	}
 
 	// Request answer
-	gpt.Request(args[0], config)
-
+	response := gpt.Request(question, config)
+	fmt.Println("A:", response)
 }
-

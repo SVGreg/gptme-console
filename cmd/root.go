@@ -40,13 +40,15 @@ func rootRun(cmd *cobra.Command, args []string) {
 	path, _ := cmd.Flags().GetString("path")
 	path = config.MakePath(path)
 
-	fmt.Println("Config path is", path)
-
 	config, err := config.Read(path)
 	if err != nil {
+		fmt.Println("Can't find config at path: ", path)
 		cmd.Help()
 		os.Exit(0)
 	}
 
-	fmt.Println("Current API key is", config.APIKey)
+	fmt.Println("Found config at path : ", path)
+	fmt.Printf("\t- Organization Id : %s...\n", config.OrganizationId[0:16])
+	fmt.Printf("\t- Project Id      : %s...\n", config.ProjectId[0:16])
+	fmt.Printf("\t- API key         : %s...\n", config.APIKey[0:16])
 }
