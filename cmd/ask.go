@@ -12,6 +12,8 @@ import (
 	"github.com/SVGreg/gptme-console/config"
 	"github.com/SVGreg/gptme-console/gpt"
 	"github.com/spf13/cobra"
+
+	markdown "github.com/MichaelMure/go-term-markdown"
 )
 
 // askCmd represents the ask command
@@ -45,5 +47,5 @@ func askRun(cmd *cobra.Command, args []string) {
 
 	// Request answer
 	response := gpt.Request(question, config)
-	fmt.Println("A:", response)
+	fmt.Println("A:", string(markdown.Render(response, 120, 2)))
 }

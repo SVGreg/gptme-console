@@ -41,7 +41,7 @@ func Request(question string, config config.Config) string {
 
 	request.Header.Set(contentTypeKey, contentTypeValue)
 	request.Header.Set(organizationKey, config.OrganizationId)
-	// request.Header.Set(projectKey, config.ProjectId)
+	request.Header.Set(projectKey, config.ProjectId)
 	request.Header.Set(headerAuthKey, headerAuthPrefix+config.APIKey)
 
 	res, err := http.DefaultClient.Do(request)
@@ -52,8 +52,6 @@ func Request(question string, config config.Config) string {
 
 	resBody, _ := io.ReadAll(res.Body)
 
-	fmt.Printf("%s", resBody)
-
 	var gptError GPTError
 	if _ = json.Unmarshal(resBody, &gptError); len(gptError.Error.Message) > 0 {
 		return fmt.Sprintf("[ERROR] GPT reports error: %s", gptError.Error.Message)
@@ -63,5 +61,5 @@ func Request(question string, config config.Config) string {
 	if err = json.Unmarshal(resBody, &gptContent); err != nil {
 		return fmt.Sprintf("[ERROR] GPT content: %s", err)
 	}
-	return fmt.Sprintf("[%s] %s", gptContent.Model, gptContent.Choices[0].Message.Content)
+	return gptContent.Choices[0].Message.Content
 }
