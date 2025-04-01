@@ -12,10 +12,31 @@ import (
 
 const Filename string = ".gptme-config.json"
 
+// ReadFunc is a type for the Read function
+type ReadFunc func(filename string) (Config, error)
+
+// DefaultRead is the default implementation of Read
+var DefaultRead ReadFunc = func(filename string) (Config, error) {
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		return Config{}, err
+	}
+
+	var config Config
+	if err := json.Unmarshal(file, &config); err != nil {
+		return Config{}, err
+	}
+
+	return config, nil
+}
+
+// Read is the function that can be reassigned for testing
+var Read = DefaultRead
+
 type Config struct {
 	OrganizationId string
-	ProjectId string
-	APIKey string
+	ProjectId      string
+	APIKey         string
 }
 
 func MakePath(path string) string {
@@ -40,18 +61,4 @@ func Save(filename string, config Config) error {
 	fmt.Println("Configuration", string(res), "saved at", filename)
 
 	return nil
-}
-
-func Read(filename string) (Config, error) {
-	file, err := os.ReadFile(filename)
-	if err != nil {
-		return Config{}, err
-	}
-
-	var config Config
-	if err := json.Unmarshal(file, &config); err != nil {
-		return Config{}, err
-	}
-
-	return config, nil
 }

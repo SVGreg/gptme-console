@@ -25,7 +25,11 @@ const (
 	projectKey              = "OpenAI-Project"
 )
 
-func Request(question string, config config.Config) string {
+// RequestFunc is a type for the Request function
+type RequestFunc func(question string, config config.Config) string
+
+// DefaultRequest is the default implementation of Request
+var DefaultRequest RequestFunc = func(question string, config config.Config) string {
 	bodyString := `{
      "model": "gpt-4o-mini",
      "messages": [{"role": "user", "content": "%s"}],
@@ -63,3 +67,6 @@ func Request(question string, config config.Config) string {
 	}
 	return gptContent.Choices[0].Message.Content
 }
+
+// Request is the function that can be reassigned for testing
+var Request = DefaultRequest
