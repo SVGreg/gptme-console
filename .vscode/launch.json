@@ -44,8 +44,7 @@
             "program": "${workspaceFolder}",
             "args": [
                 "session",
-                "--cat",
-                "1"
+                "--cat"
             ],
             "cwd": "${workspaceFolder}"
         },

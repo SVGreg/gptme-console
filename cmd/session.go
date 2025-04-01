@@ -5,10 +5,16 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strings"
 
+	"github.com/SVGreg/gptme-console/config"
+	"github.com/SVGreg/gptme-console/gpt"
 	"github.com/SVGreg/gptme-console/session"
 	"github.com/spf13/cobra"
+
+	markdown "github.com/MichaelMure/go-term-markdown"
 )
 
 // sessionCmd represents the session command
@@ -25,8 +31,9 @@ func init() {
 	sessionCmd.PersistentFlags().StringP("start", "s", "", "Creates new session with specified name and makes it current")
 	sessionCmd.PersistentFlags().StringP("use", "u", "", "Uses session with specified name. Raises error if session does not exist.")
 	sessionCmd.PersistentFlags().BoolP("list", "l", false, "Prints the list of stored sessions")
-	sessionCmd.PersistentFlags().StringP("cat", "c", "", "Prints history of specified session. Recommended to use with 'less' or 'more'.")
+	sessionCmd.PersistentFlags().BoolP("cat", "c", false, "Prints history of current session. Recommended to use with 'less' or 'more'.")
 	sessionCmd.PersistentFlags().Bool("clean", false, "Cleans up all stored sessions")
+	sessionCmd.PersistentFlags().StringP("ask", "a", "", "Asks a question in the current session")
 }
 
 func sessionRun(cmd *cobra.Command, args []string) {
@@ -55,15 +62,21 @@ func sessionRun(cmd *cobra.Command, args []string) {
 	}
 
 	// Handle cat flag
-	if catName, _ := cmd.Flags().GetString("cat"); catName != "" {
-		s := sm.GetSession(catName)
+	if cat, _ := cmd.Flags().GetBool("cat"); cat {
+		sessionName := sm.Current
+		if sessionName == "" {
+			fmt.Println("Error: No current session. Use --start or --use to select a session first.")
+			os.Exit(1)
+		}
+
+		s := sm.GetSession(sessionName)
 		if s == nil {
-			fmt.Printf("Session '%s' not found\n", catName)
+			fmt.Printf("Session '%s' not found\n", sessionName)
 			return
 		}
-		fmt.Printf("Session '%s' history:\n", catName)
+		fmt.Printf("Session '%s' history:\n", sessionName)
 		for _, msg := range s.Messages {
-			fmt.Printf("[%s] %s: %s\n", msg.Timestamp.Format("2006-01-02 15:04:05"), msg.Role, msg.Content)
+			fmt.Printf("[%s] %s: %s\n", msg.Timestamp.Format("2006-01-02 15:04:05"), msg.Role, markdown.Render(msg.Content, 120, 2))
 		}
 		return
 	}
@@ -96,6 +109,46 @@ func sessionRun(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 		fmt.Printf("Using session '%s'\n", useName)
+		return
+	}
+
+	// Handle ask flag
+	if question, _ := cmd.Flags().GetString("ask"); question != "" {
+		if sm.Current == "" {
+			fmt.Println("Error: No current session. Use --start or --use to select a session first.")
+			os.Exit(1)
+		}
+
+		if len(strings.Fields(question)) > 30 {
+			fmt.Println("Error: Question is limited to 30 words")
+			os.Exit(1)
+		}
+
+		fmt.Println("Q:", question)
+
+		// Read config: api key
+		path, _ := cmd.Flags().GetString("path")
+		config, err := config.Read(config.MakePath(path))
+		if err != nil {
+			log.Fatalln("Unable to read config", err)
+		}
+
+		// Store the question in the session
+		if err := sm.AddMessage(sm.Current, "user", question); err != nil {
+			fmt.Printf("Error storing question: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Request answer
+		response := gpt.Request(question, config)
+		fmt.Println("A:", string(markdown.Render(response, 120, 2)))
+
+		// Store the response in the session
+		if err := sm.AddMessage(sm.Current, "assistant", response); err != nil {
+			fmt.Printf("Error storing response: %v\n", err)
+			os.Exit(1)
+		}
+
 		return
 	}
 
