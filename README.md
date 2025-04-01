@@ -1,6 +1,6 @@
 # GPTme Console
 
-A command-line interface for interacting with GPT models, featuring session management for persistent conversations.
+A command-line interface for communicating with GPT models, featuring session management for persistent conversations.
 
 ## Features
 
@@ -18,7 +18,17 @@ go install github.com/SVGreg/gptme-console@latest
 
 ## Configuration
 
-Before using the tool, you need to set up your OpenAI API key and other parameters. Create a configuration file at `~/.gptme-config.json` with the following structure:
+Before using the tool, you need to set up your OpenAI API key and other parameters. It is possible to specify `path` to configuration file using `-p` parameter. 
+
+### Command
+
+Use `init` command to initialize the project
+```bash
+gptme-console init ...
+```
+
+### Manually
+ Create a configuration file at `~/.gptme-config.json` with the following structure:
 
 ```json
 {
@@ -26,11 +36,6 @@ Before using the tool, you need to set up your OpenAI API key and other paramete
     "ProjectId":"proj_XXXX",
     "APIKey":"sk-proj-XXXXXXX"
 }
-```
-
-Use `init` command to initialize the project
-```bash
-gptme-console init ...
 ```
 
 ## Commands
