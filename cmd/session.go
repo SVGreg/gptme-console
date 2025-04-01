@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/SVGreg/gptme-console/config"
 	"github.com/SVGreg/gptme-console/gpt"
@@ -116,11 +115,6 @@ func sessionRun(cmd *cobra.Command, args []string) {
 	if question, _ := cmd.Flags().GetString("ask"); question != "" {
 		if sm.Current == "" {
 			fmt.Println("Error: No current session. Use --start or --use to select a session first.")
-			os.Exit(1)
-		}
-
-		if len(strings.Fields(question)) > 30 {
-			fmt.Println("Error: Question is limited to 30 words")
 			os.Exit(1)
 		}
 

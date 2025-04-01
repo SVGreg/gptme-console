@@ -6,7 +6,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/SVGreg/gptme-console/config"
@@ -30,11 +29,6 @@ func init() {
 }
 
 func askRun(cmd *cobra.Command, args []string) {
-	if len(args) > 30 {
-		cmd.Help()
-		os.Exit(0)
-	}
-
 	question := strings.Join(args, " ")
 	fmt.Println("Q:", question)
 
