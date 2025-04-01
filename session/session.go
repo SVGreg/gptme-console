@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	SessionDir  = ".gptme_sessions"
+	SessionDir  = ".gptme-sessions"
 	SessionFile = "sessions.json"
 )
 
 type Session struct {
-	ID        int       `json:"id"`
+	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	Messages  []Message `json:"messages"`
 }
@@ -26,8 +26,7 @@ type Message struct {
 }
 
 type SessionManager struct {
-	Sessions []Session `json:"sessions"`
-	Current  int       `json:"current"`
+	Current string `json:"current"`
 }
 
 func NewSessionManager() (*SessionManager, error) {
@@ -59,46 +58,129 @@ func (sm *SessionManager) save() error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func (sm *SessionManager) CreateSession() *Session {
+func (sm *SessionManager) sessionPath(name string) string {
+	return filepath.Join(SessionDir, name+".json")
+}
+
+func (sm *SessionManager) loadSession(name string) (*Session, error) {
+	path := sm.sessionPath(name)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var session Session
+	if err := json.Unmarshal(data, &session); err != nil {
+		return nil, err
+	}
+	return &session, nil
+}
+
+func (sm *SessionManager) saveSession(session *Session) error {
+	data, err := json.MarshalIndent(session, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(sm.sessionPath(session.Name), data, 0644)
+}
+
+func (sm *SessionManager) CreateSession(name string) (*Session, error) {
+	// Check if session with this name already exists
+	if _, err := sm.loadSession(name); err == nil {
+		return nil, fmt.Errorf("session '%s' already exists", name)
+	}
+
 	session := Session{
-		ID:        len(sm.Sessions) + 1,
+		Name:      name,
 		CreatedAt: time.Now(),
 		Messages:  []Message{},
 	}
-	sm.Sessions = append(sm.Sessions, session)
-	sm.Current = session.ID
-	sm.save()
-	return &session
-}
 
-func (sm *SessionManager) GetSession(id int) *Session {
-	for i := range sm.Sessions {
-		if sm.Sessions[i].ID == id {
-			return &sm.Sessions[i]
-		}
+	if err := sm.saveSession(&session); err != nil {
+		return nil, err
 	}
-	return nil
+
+	sm.Current = name
+	if err := sm.save(); err != nil {
+		return nil, err
+	}
+	return &session, nil
 }
 
-func (sm *SessionManager) AddMessage(sessionID int, role, content string) error {
-	session := sm.GetSession(sessionID)
+func (sm *SessionManager) GetSession(name string) *Session {
+	session, err := sm.loadSession(name)
+	if err != nil {
+		return nil
+	}
+	return session
+}
+
+func (sm *SessionManager) AddMessage(sessionName string, role, content string) error {
+	session := sm.GetSession(sessionName)
 	if session == nil {
-		return fmt.Errorf("session %d not found", sessionID)
+		return fmt.Errorf("session '%s' not found", sessionName)
 	}
 	session.Messages = append(session.Messages, Message{
 		Role:      role,
 		Content:   content,
 		Timestamp: time.Now(),
 	})
-	return sm.save()
+	return sm.saveSession(session)
 }
 
-func (sm *SessionManager) ListSessions() []Session {
-	return sm.Sessions
+func (sm *SessionManager) ListSessions() ([]Session, error) {
+	entries, err := os.ReadDir(SessionDir)
+	if err != nil {
+		return nil, err
+	}
+
+	var sessions []Session
+	for _, entry := range entries {
+		if entry.IsDir() || entry.Name() == SessionFile {
+			continue
+		}
+		if filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+
+		name := entry.Name()[:len(entry.Name())-5] // Remove .json extension
+		session, err := sm.loadSession(name)
+		if err != nil {
+			continue
+		}
+		sessions = append(sessions, *session)
+	}
+	return sessions, nil
 }
 
 func (sm *SessionManager) Clean() error {
-	sm.Sessions = []Session{}
-	sm.Current = 0
+	entries, err := os.ReadDir(SessionDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || entry.Name() == SessionFile {
+			continue
+		}
+		if filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+
+		path := filepath.Join(SessionDir, entry.Name())
+		if err := os.Remove(path); err != nil {
+			return err
+		}
+	}
+
+	sm.Current = ""
+	return sm.save()
+}
+
+func (sm *SessionManager) SetCurrent(name string) error {
+	session := sm.GetSession(name)
+	if session == nil {
+		return fmt.Errorf("session '%s' not found", name)
+	}
+	sm.Current = name
 	return sm.save()
 }

@@ -48,6 +48,25 @@
                 "1"
             ],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug Init",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "init",
+                "--path",
+                "${workspaceFolder}",
+                "--key",
+                "sk-proj-1234567890",
+                "--org",
+                "org-1234567890",
+                "--project",
+                "project-1234567890"
+            ],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 const Filename string = ".gptme-config.json"
@@ -41,24 +42,34 @@ type Config struct {
 
 func MakePath(path string) string {
 	if path == "" {
-		return Filename
-	} else {
-		return path + string(os.PathSeparator) + Filename
+		// Get user's home directory
+		home, err := os.UserHomeDir()
+		if err != nil {
+			// Fallback to current directory if home directory cannot be determined
+			home = "."
+		}
+		return filepath.Join(home, Filename)
 	}
+	return filepath.Join(path, Filename)
 }
 
 func Save(filename string, config Config) error {
-	res, err := json.Marshal(config)
+	// Ensure the directory exists
+	dir := filepath.Dir(filename)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %v", err)
+	}
+
+	res, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal config: %v", err)
 	}
 
 	err = os.WriteFile(filename, res, 0644)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write config file: %v", err)
 	}
 
-	fmt.Println("Configuration", string(res), "saved at", filename)
-
+	fmt.Printf("Configuration saved at %s\n", filename)
 	return nil
 }
