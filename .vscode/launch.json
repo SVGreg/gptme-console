@@ -57,7 +57,7 @@
             "args": [
                 "session",
                 "--ask",
-                "What is Go programming language?"
+                "How goroutines work?"
             ],
             "cwd": "${workspaceFolder}"
         },

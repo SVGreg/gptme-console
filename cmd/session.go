@@ -84,8 +84,8 @@ func sessionRun(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// If no flags are set, show help
-	cmd.Help()
+	// If no flags are set, show current session information
+	handleCurrentSessionInfo(sm)
 }
 
 func handleListSessions(sm *session.SessionManager) {
@@ -226,4 +226,37 @@ func handleAskInSession(sm *session.SessionManager, question string, cmd *cobra.
 	if err := sm.AddMessage(sm.Current, "assistant", response); err != nil {
 		logger.Fatal("Error storing response: %v", err)
 	}
+}
+
+func handleCurrentSessionInfo(sm *session.SessionManager) {
+	if sm.Current == "" {
+		fmt.Println("No current session active.")
+		fmt.Println("Use 'session --start <name>' to create a new session or 'session --use <name>' to select an existing one.")
+		fmt.Println("Use 'session --list' to see all available sessions.")
+		return
+	}
+
+	s := sm.GetSession(sm.Current)
+	if s == nil {
+		fmt.Printf("Current session '%s' not found (may have been deleted).\n", sm.Current)
+		fmt.Println("Use 'session --list' to see available sessions.")
+		return
+	}
+
+	fmt.Printf("Current session: %s\n", s.Name)
+	if s.Description != "" {
+		fmt.Printf("Description: %s\n", s.Description)
+	}
+	if len(s.Tags) > 0 {
+		fmt.Printf("Tags: %s\n", strings.Join(s.Tags, ", "))
+	}
+	fmt.Printf("Created: %s\n", s.CreatedAt.Format("2006-01-02 15:04:05"))
+	fmt.Printf("Updated: %s\n", s.UpdatedAt.Format("2006-01-02 15:04:05"))
+	fmt.Printf("Messages: %d\n", len(s.Messages))
+	fmt.Println()
+	fmt.Println("Available commands:")
+	fmt.Println("  session --ask \"<question>\"     - Ask a question in this session")
+	fmt.Println("  session --cat \"\"              - Show session history")
+	fmt.Println("  session --list                - List all sessions")
+	fmt.Println("  session --use <name>          - Switch to another session")
 }
