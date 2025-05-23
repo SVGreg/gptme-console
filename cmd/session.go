@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/SVGreg/gptme-console/config"
 	"github.com/SVGreg/gptme-console/gpt"
@@ -30,7 +31,7 @@ func init() {
 	sessionCmd.PersistentFlags().StringP("start", "s", "", "Creates new session with specified name and makes it current")
 	sessionCmd.PersistentFlags().StringP("use", "u", "", "Uses session with specified name. Raises error if session does not exist.")
 	sessionCmd.PersistentFlags().BoolP("list", "l", false, "Prints the list of stored sessions")
-	sessionCmd.PersistentFlags().BoolP("cat", "c", false, "Prints history of current session. Recommended to use with 'less' or 'more'.")
+	sessionCmd.PersistentFlags().StringP("cat", "c", "", "Prints history of specified session. If empty, shows current session.")
 	sessionCmd.PersistentFlags().Bool("clean", false, "Cleans up all stored sessions")
 	sessionCmd.PersistentFlags().StringP("ask", "a", "", "Asks a question in the current session")
 }
@@ -55,27 +56,35 @@ func sessionRun(cmd *cobra.Command, args []string) {
 		}
 		fmt.Println("Available sessions:")
 		for _, s := range sessions {
-			fmt.Printf("Session '%s': Created at %s, %d messages\n", s.Name, s.CreatedAt.Format("2006-01-02 15:04:05"), len(s.Messages))
+			currentMarker := ""
+			if s.Name == sm.Current {
+				currentMarker = " (current)"
+			}
+			fmt.Printf("Session '%s': Created at %s, %d messages%s\n", s.Name, s.CreatedAt.Format("2006-01-02 15:04:05"), len(s.Messages), currentMarker)
 		}
 		return
 	}
 
 	// Handle cat flag
-	if cat, _ := cmd.Flags().GetBool("cat"); cat {
-		sessionName := sm.Current
+	if cmd.Flags().Changed("cat") {
+		catName, _ := cmd.Flags().GetString("cat")
+		sessionName := catName
 		if sessionName == "" {
-			fmt.Println("Error: No current session. Use --start or --use to select a session first.")
-			os.Exit(1)
+			if sm.Current == "" {
+				fmt.Println("Error: No current session. Use --start or --use to select a session first.")
+				os.Exit(1)
+			}
+			sessionName = sm.Current
 		}
 
 		s := sm.GetSession(sessionName)
 		if s == nil {
 			fmt.Printf("Session '%s' not found\n", sessionName)
-			return
+			os.Exit(1)
 		}
 		fmt.Printf("Session '%s' history:\n", sessionName)
 		for _, msg := range s.Messages {
-			fmt.Printf("[%s] %s: %s\n", msg.Timestamp.Format("2006-01-02 15:04:05"), msg.Role, markdown.Render(msg.Content, 120, 2))
+			fmt.Printf("[%s] %s: %s\n", msg.Timestamp.Format("2006-01-02 15:04:05"), msg.Role, string(markdown.Render(msg.Content, 120, 2)))
 		}
 		return
 	}
@@ -115,6 +124,11 @@ func sessionRun(cmd *cobra.Command, args []string) {
 	if question, _ := cmd.Flags().GetString("ask"); question != "" {
 		if sm.Current == "" {
 			fmt.Println("Error: No current session. Use --start or --use to select a session first.")
+			os.Exit(1)
+		}
+
+		if len(strings.Fields(question)) > 30 {
+			fmt.Println("Error: Question is limited to 30 words")
 			os.Exit(1)
 		}
 

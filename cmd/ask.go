@@ -20,7 +20,8 @@ var askCmd = &cobra.Command{
 	Use:   "ask",
 	Short: "Asks GPT you question",
 	Long: `Asks GPT you question. 
-Please type the question right after 'ask' command. It is limited to 30 words.`,
+This command sends a question to GPT and displays the response in markdown format.
+This is ad-hoc question&answer and will not be stored in session.`,
 	Run: askRun,
 }
 
@@ -29,6 +30,12 @@ func init() {
 }
 
 func askRun(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		fmt.Println("Error: Please provide a question")
+		cmd.Help()
+		return
+	}
+
 	question := strings.Join(args, " ")
 	fmt.Println("Q:", question)
 

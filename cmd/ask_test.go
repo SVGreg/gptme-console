@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"log"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/SVGreg/gptme-console/config"
@@ -37,9 +36,9 @@ func TestAskRun(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Too many arguments",
-			args:     strings.Split(strings.Repeat("word ", 31), " "),
-			expected: "Usage:\n",
+			name:     "No arguments",
+			args:     []string{},
+			expected: "Error: Please provide a question",
 		},
 		{
 			name:     "Valid question",

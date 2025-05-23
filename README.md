@@ -24,7 +24,7 @@ Before using the tool, you need to set up your OpenAI API key and other paramete
 
 Use `init` command to initialize the project
 ```bash
-gptme-console init ...
+gptme-console init --key sk-proj-XXXXXXX --org org-YYYYY --project proj_XXXX
 ```
 
 ### Manually
@@ -74,15 +74,21 @@ Switches to an existing session. Raises an error if the session doesn't exist.
 gptme-console session --list
 ```
 
-Displays all available sessions with their creation dates and message counts.
+Displays all available sessions with their creation dates and message counts. Current session is marked with "(current)".
 
 #### View Session History
+
+```bash
+gptme-console session --cat "session-name"
+```
+
+Shows the history of the specified session. If no session name is provided, shows the current session:
 
 ```bash
 gptme-console session --cat
 ```
 
-Shows the history of the current session. Recommended to use with `less` or `more` for better readability.
+Recommended to use with `less` or `more` for better readability.
 
 #### Ask Questions in Session
 
@@ -90,7 +96,7 @@ Shows the history of the current session. Recommended to use with `less` or `mor
 gptme-console session --ask "Your question here"
 ```
 
-Sends a question in the current session context. The question and response will be stored in the session history.
+Sends a question in the current session context. The question and response will be stored in the session history. Questions are limited to 30 words.
 
 #### Clean Sessions
 
@@ -110,6 +116,7 @@ Sessions are stored in the `~/.gptme-sessions/` directory:
 
 - A current session must be selected (using `--start` or `--use`) before asking session questions
 - Session names must be unique
+- Session questions are limited to 30 words
 
 ## License
 

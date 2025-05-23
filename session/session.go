@@ -29,6 +29,14 @@ type SessionManager struct {
 	Current string `json:"current"`
 }
 
+func getSessionsDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		home = "."
+	}
+	return filepath.Join(home, SessionDir)
+}
+
 func NewSessionManager() (*SessionManager, error) {
 	sm := &SessionManager{}
 	if err := sm.load(); err != nil {
@@ -38,7 +46,7 @@ func NewSessionManager() (*SessionManager, error) {
 }
 
 func (sm *SessionManager) load() error {
-	path := filepath.Join(SessionDir, SessionFile)
+	path := filepath.Join(getSessionsDir(), SessionFile)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -47,10 +55,11 @@ func (sm *SessionManager) load() error {
 }
 
 func (sm *SessionManager) save() error {
-	if err := os.MkdirAll(SessionDir, 0755); err != nil {
+	sessionDir := getSessionsDir()
+	if err := os.MkdirAll(sessionDir, 0755); err != nil {
 		return err
 	}
-	path := filepath.Join(SessionDir, SessionFile)
+	path := filepath.Join(sessionDir, SessionFile)
 	data, err := json.MarshalIndent(sm, "", "  ")
 	if err != nil {
 		return err
@@ -59,7 +68,7 @@ func (sm *SessionManager) save() error {
 }
 
 func (sm *SessionManager) sessionPath(name string) string {
-	return filepath.Join(SessionDir, name+".json")
+	return filepath.Join(getSessionsDir(), name+".json")
 }
 
 func (sm *SessionManager) loadSession(name string) (*Session, error) {
@@ -76,6 +85,9 @@ func (sm *SessionManager) loadSession(name string) (*Session, error) {
 }
 
 func (sm *SessionManager) saveSession(session *Session) error {
+	if err := os.MkdirAll(getSessionsDir(), 0755); err != nil {
+		return err
+	}
 	data, err := json.MarshalIndent(session, "", "  ")
 	if err != nil {
 		return err
@@ -128,7 +140,8 @@ func (sm *SessionManager) AddMessage(sessionName string, role, content string) e
 }
 
 func (sm *SessionManager) ListSessions() ([]Session, error) {
-	entries, err := os.ReadDir(SessionDir)
+	sessionDir := getSessionsDir()
+	entries, err := os.ReadDir(sessionDir)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +166,8 @@ func (sm *SessionManager) ListSessions() ([]Session, error) {
 }
 
 func (sm *SessionManager) Clean() error {
-	entries, err := os.ReadDir(SessionDir)
+	sessionDir := getSessionsDir()
+	entries, err := os.ReadDir(sessionDir)
 	if err != nil {
 		return err
 	}
@@ -166,7 +180,7 @@ func (sm *SessionManager) Clean() error {
 			continue
 		}
 
-		path := filepath.Join(SessionDir, entry.Name())
+		path := filepath.Join(sessionDir, entry.Name())
 		if err := os.Remove(path); err != nil {
 			return err
 		}
