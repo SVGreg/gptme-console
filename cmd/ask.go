@@ -5,11 +5,12 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/SVGreg/gptme-console/config"
 	"github.com/SVGreg/gptme-console/gpt"
+	"github.com/SVGreg/gptme-console/internal/constants"
+	"github.com/SVGreg/gptme-console/internal/logger"
 	"github.com/spf13/cobra"
 
 	markdown "github.com/MichaelMure/go-term-markdown"
@@ -39,14 +40,14 @@ func askRun(cmd *cobra.Command, args []string) {
 	question := strings.Join(args, " ")
 	fmt.Println("Q:", question)
 
-	// Read config: api key
+	// Read config
 	path, _ := cmd.Flags().GetString("path")
 	config, err := config.Read(config.MakePath(path))
 	if err != nil {
-		log.Fatalln("Unable to read config", err)
+		logger.Fatal("Unable to read config: %v", err)
 	}
 
-	// Request answer
+	// Request answer (no context for standalone ask)
 	response := gpt.Request(question, config)
-	fmt.Println("A:", string(markdown.Render(response, 120, 2)))
+	fmt.Println("A:", string(markdown.Render(response, constants.MarkdownWidth, constants.MarkdownIndent)))
 }

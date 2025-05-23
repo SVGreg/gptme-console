@@ -1,66 +1,71 @@
 /*
-Copyright © 2024 GPTMe
+Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 */
 package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/SVGreg/gptme-console/config"
+	"github.com/SVGreg/gptme-console/internal/logger"
+	"github.com/SVGreg/gptme-console/internal/validation"
 	"github.com/spf13/cobra"
 )
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialises GPT environment",
-	Long:  `Initialises GPT environment and configures API key`,
-	Run:   initRun,
+	Short: "Initialize configuration",
+	Long: `Initialize the configuration file with API key and other settings.
+This command creates a configuration file in the specified directory or in the home directory by default.`,
+	Run: initRun,
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-	initCmd.PersistentFlags().StringP("key", "k", "", "Specifies API key to work with")
-	initCmd.PersistentFlags().StringP("org", "o", "", "OpenAI Organization Id")
-	initCmd.PersistentFlags().StringP("project", "j", "", "OpenAI Project Id")
+
+	initCmd.PersistentFlags().StringP("key", "k", "", "OpenAI API key (required)")
+	initCmd.PersistentFlags().StringP("org", "o", "", "OpenAI Organization ID (required)")
+	initCmd.PersistentFlags().StringP("project", "j", "", "OpenAI Project ID (required)")
+
+	// Mark required flags
+	initCmd.MarkPersistentFlagRequired("key")
+	initCmd.MarkPersistentFlagRequired("org")
+	initCmd.MarkPersistentFlagRequired("project")
 }
 
 func initRun(cmd *cobra.Command, args []string) {
-	if len(args) > 0 {
-		cmd.Help()
-		os.Exit(0)
-	}
-
+	// Get flag values
+	apiKey, _ := cmd.Flags().GetString("key")
+	orgID, _ := cmd.Flags().GetString("org")
+	projectID, _ := cmd.Flags().GetString("project")
 	path, _ := cmd.Flags().GetString("path")
-	path = config.MakePath(path)
-	fmt.Println("Config path is", path)
 
-	key, _ := cmd.Flags().GetString("key")
-	if key == "" {
-		cmd.Help()
-		os.Exit(1)
+	// Validate inputs
+	if err := validation.ValidateAPIKey(apiKey); err != nil {
+		logger.Fatal("Invalid API key: %v", err)
 	}
 
-	org, _ := cmd.Flags().GetString("org")
-	if org == "" {
-		cmd.Help()
-		os.Exit(1)
+	if err := validation.ValidateOrganizationID(orgID); err != nil {
+		logger.Fatal("Invalid organization ID: %v", err)
 	}
 
-	proj, _ := cmd.Flags().GetString("project")
-	if proj == "" {
-		cmd.Help()
-		os.Exit(1)
+	if err := validation.ValidateProjectID(projectID); err != nil {
+		logger.Fatal("Invalid project ID: %v", err)
 	}
 
-	err := config.Save(path, config.Config{
-		OrganizationId: org, 
-		ProjectId: proj, 
-		APIKey: key,
-	})
-	if err != nil {
-		_ = fmt.Errorf("%v", err)
-		os.Exit(0)
+	// Create config
+	cfg := config.Config{
+		APIKey:         apiKey,
+		OrganizationId: orgID,
+		ProjectId:      projectID,
 	}
+
+	// Save config
+	configPath := config.MakePath(path)
+	if err := config.Save(configPath, cfg); err != nil {
+		logger.Fatal("Failed to save configuration: %v", err)
+	}
+
+	fmt.Printf("Configuration saved successfully to %s\n", configPath)
 }
