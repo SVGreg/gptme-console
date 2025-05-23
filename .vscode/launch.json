@@ -44,7 +44,8 @@
             "program": "${workspaceFolder}",
             "args": [
                 "session",
-                "--cat"
+                "--cat",
+                ""
             ],
             "cwd": "${workspaceFolder}"
         },
@@ -57,7 +58,7 @@
             "args": [
                 "session",
                 "--ask",
-                "How goroutines work?"
+                "What about channels?"
             ],
             "cwd": "${workspaceFolder}"
         },

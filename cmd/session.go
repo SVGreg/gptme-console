@@ -1,5 +1,8 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright (c) 2024 SVGreg <git@svgreg.net>
+
+This software is licensed under the MIT License.
+See the LICENSE file for details.
 */
 package cmd
 

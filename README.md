@@ -2,6 +2,8 @@
 
 A command-line interface for communicating with GPT models, featuring session management for persistent conversations.
 
+**Author:** SVGreg <git@svgreg.net>
+
 ## Features
 
 - Interactive chat with GPT models
@@ -85,7 +87,7 @@ gptme-console session --cat "session-name"
 Shows the history of the specified session. If no session name is provided, shows the current session:
 
 ```bash
-gptme-console session --cat
+gptme-console session --cat ""
 ```
 
 Recommended to use with `less` or `more` for better readability.
@@ -120,4 +122,10 @@ Sessions are stored in the `~/.gptme-sessions/` directory:
 
 ## License
 
-[Your License Here] 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Author
+
+**SVGreg**  
+Email: git@svgreg.net  
+GitHub: [@SVGreg](https://github.com/SVGreg) 
